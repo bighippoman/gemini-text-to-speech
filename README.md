@@ -4,7 +4,7 @@ A user-friendly web interface for converting text to speech using Google's Gemin
 
 ## Features
 
-- **Web Interface**: Beautiful, modern web UI accessible from any browser
+- **Web Interface**: Web UI accessible from any browser
 - **Multiple TTS Models**: Supports Gemini 2.5 Flash and Pro TTS models
 - **30+ Voices**: Wide variety of voice options including Puck, Kore, Charon, and more
 - **Multi-Speaker Support**: Create conversations with different voices
