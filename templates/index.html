@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Text-to-Speech</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #2196F3;
+            color: white;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-button.active {
+            background-color: #e3f2fd;
+            border-bottom-color: #2196F3;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        textarea, select, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea:focus, select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .button:hover {
+            background-color: #1976D2;
+        }
+
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+
+        .result.success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .audio-player {
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .speakers-config {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .speaker-config {
+            flex: 1;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+        }
+
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+        }
+
+        .voice-option {
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .voice-option:hover {
+            background-color: #e3f2fd;
+        }
+
+        .voice-option.selected {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .example-text {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .api-key-section {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .api-key-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .api-key-section p {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .api-key-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-key-input input {
+            flex: 1;
+            font-family: monospace;
+        }
+
+        .api-key-input button {
+            width: auto;
+            padding: 10px 20px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gemini TTS</h1>
+            <p>Convert text to speech with AI-powered voices</p>
+        </div>
+
+        <div class="content">
+            <!-- API Key Section -->
+            <div id="apiKeySection" class="api-key-section">
+                <h3>Google AI API Key</h3>
+                <p>Enter your Google AI API key to get started. Get one from <a href="https://aistudio.google.com/" target="_blank">AI Studio</a>.</p>
+                <div class="api-key-input">
+                    <input type="password" id="apiKeyInput" placeholder="Enter your Google AI API key..." value="">
+                    <button onclick="validateAndSaveApiKey()" class="button">Start Using TTS</button>
+                </div>
+                <p style="font-size: 0.9rem; margin-top: 10px; color: #666;">
+                    🔒 Your API key is stored locally in your browser session only.
+                </p>
+                <p style="font-size: 0.85rem; margin-top: 8px; color: #888;">
+                    💡 Note: Free tier has rate limits. If you get quota errors, check your 
+                    <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" style="color: #1976d2;">API billing and limits</a>.
+                </p>
+            </div>
+
+            <!-- Main Interface -->
+            <div id="mainInterface" style="display: none;">
+                <!-- API Key Status Bar -->
+                <div style="background-color: #d4edda; padding: 10px; border: 1px solid #c3e6cb; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #155724;">✅ API Key Set - Ready to generate speech!</span>
+                    <button onclick="changeApiKey()" style="background-color: #28a745; padding: 5px 10px; font-size: 12px; color: white; border: none; cursor: pointer;">Change Key</button>
+                </div>
+                <!-- Tab Buttons -->
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="showTab('single')">Single Speaker</button>
+                    <button class="tab-button" onclick="showTab('multi')">Multi Speaker</button>
+                    <button class="tab-button" onclick="showTab('generate')">Generate Content</button>
+                </div>
+
+                <!-- Single Speaker Tab -->
+                <div id="singleTab" class="tab-content active">
+                    <h3>Single Speaker Text-to-Speech</h3>
+                    
+                    <div class="form-group">
+                        <label for="singleStyleInstructions">Style Instructions (Optional):</label>
+                        <textarea id="singleStyleInstructions" placeholder="e.g., Read aloud in a warm and friendly tone..." style="min-height: 60px;"></textarea>
+                        <div class="example-text">💡 Examples: "Read aloud in a warm and friendly tone", "Speak dramatically with pauses", "Use a conversational style"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="singleText">Text to Convert:</label>
+                        <textarea id="singleText" placeholder="Enter the text you want to convert to speech...">Have a wonderful day!</textarea>
+                        <div class="example-text">💡 Just enter your text - style instructions are handled separately above</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="singleVoice">Voice:</label>
+                        <select id="singleVoice">
+                            <option value="Kore">Kore (Firm)</option>
+                            <option value="Puck" selected>Puck (Upbeat)</option>
+                            <option value="Charon">Charon (Informative)</option>
+                            <option value="Enceladus">Enceladus (Breathy)</option>
+                            <option value="Leda">Leda (Youthful)</option>
+                        </select>
+                        <div class="voice-grid" style="display: none;" id="allVoices"></div>
+                        <button type="button" onclick="toggleVoiceGrid()" style="margin-top: 10px; width: auto; padding: 5px 10px; font-size: 12px; background-color: #6c757d; color: white; border: none; cursor: pointer;">Show All Voices</button>
+                    </div>
+
+                    <button onclick="generateSingle()" class="button" id="singleBtn">Generate Speech</button>
+                </div>
+
+                <!-- Multi Speaker Tab -->
+                <div id="multiTab" class="tab-content">
+                    <h3>Multi-Speaker Conversation</h3>
+                    
+                    <div class="form-group">
+                        <label for="multiStyleInstructions">Style Instructions (Optional):</label>
+                        <textarea id="multiStyleInstructions" placeholder="e.g., Have a natural conversation with appropriate emotions..." style="min-height: 60px;"></textarea>
+                        <div class="example-text">💡 Examples: "Have a natural conversation", "Speak with excitement and energy", "Use a professional tone"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="multiText">Conversation Text:</label>
+                        <textarea id="multiText" placeholder="Enter conversation with speaker names...">Jane: Hello there, how are you today?
+Joe: I'm doing great, thanks for asking! How about you?
+Jane: Fantastic! I've been working on some exciting AI projects.</textarea>
+                        <div class="example-text">💡 Include speaker names like "Jane: Hello!" and "Joe: Hi there!"</div>
+                    </div>
+
+                    <div class="speakers-config">
+                        <div class="speaker-config">
+                            <label for="speaker1Name">Speaker 1 Name:</label>
+                            <input type="text" id="speaker1Name" value="Jane" placeholder="Enter speaker name">
+                            <label for="speaker1Voice" style="margin-top: 10px;">Voice:</label>
+                            <select id="speaker1Voice">
+                                <option value="Kore" selected>Kore (Firm)</option>
+                            </select>
+                        </div>
+                        <div class="speaker-config">
+                            <label for="speaker2Name">Speaker 2 Name:</label>
+                            <input type="text" id="speaker2Name" value="Joe" placeholder="Enter speaker name">
+                            <label for="speaker2Voice" style="margin-top: 10px;">Voice:</label>
+                            <select id="speaker2Voice">
+                                <option value="Puck" selected>Puck (Upbeat)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="generateMulti()" class="button" id="multiBtn">Generate Conversation</button>
+                </div>
+
+                <!-- Generate Content Tab -->
+                <div id="generateTab" class="tab-content">
+                    <h3>Generate & Speak Content</h3>
+                    <div class="form-group">
+                        <label for="topicText">Topic:</label>
+                        <input type="text" id="topicText" placeholder="Enter a topic to generate content about..." value="the future of artificial intelligence">
+                        <div class="example-text">💡 Try: "space exploration", "climate change solutions", "history of computers"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="generateMultiSpeaker" onchange="toggleGenerateMode()"> 
+                            Use Multiple Speakers
+                        </label>
+                    </div>
+
+                    <div id="generateSpeakersConfig" style="display: none;">
+                        <div class="speakers-config">
+                            <div class="speaker-config">
+                                <label for="genSpeaker1Name">Speaker 1:</label>
+                                <input type="text" id="genSpeaker1Name" value="Jane" placeholder="Speaker name">
+                                <select id="genSpeaker1Voice">
+                                    <option value="Kore" selected>Kore (Firm)</option>
+                                </select>
+                            </div>
+                            <div class="speaker-config">
+                                <label for="genSpeaker2Name">Speaker 2:</label>
+                                <input type="text" id="genSpeaker2Name" value="Joe" placeholder="Speaker name">
+                                <select id="genSpeaker2Voice">
+                                    <option value="Puck" selected>Puck (Upbeat)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="generateContent()" class="button" id="generateBtn">Generate & Speak</button>
+                    
+                    <!-- Generated Content Display -->
+                    <div id="generatedContentSection" style="display: none; margin-top: 20px;">
+                        <div style="background-color: #e8f5e8; border: 1px solid #c3e6cb; padding: 15px; margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 10px; color: #155724;">Generated Content:</h4>
+                            <div id="generatedContentText" style="white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.5; color: #333;"></div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="convertGeneratedToSpeech()" class="button" style="flex: 1;">Convert to Speech</button>
+                            <button onclick="editGeneratedContent()" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; cursor: pointer; flex: 1;">Edit Content</button>
+                        </div>
+                        
+                        <!-- Edit Content Section -->
+                        <div id="editContentSection" style="display: none; margin-top: 15px;">
+                            <label for="editContentText">Edit the generated content:</label>
+                            <textarea id="editContentText" style="min-height: 150px; margin-top: 5px;"></textarea>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button onclick="saveEditedContent()" class="button" style="flex: 1;">Save Changes</button>
+                                <button onclick="cancelEdit()" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; cursor: pointer; flex: 1;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Animation -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <span id="loadingText">Generating audio...</span>
+                </div>
+
+                <!-- Result Section -->
+                <div id="result" class="result">
+                    <div id="resultMessage"></div>
+                    <audio id="audioPlayer" class="audio-player" controls style="display: none;">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentApiKey = '';
+        const voices = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVoices();
+            // Check if API key is stored in sessionStorage
+            const storedApiKey = sessionStorage.getItem('gemini_api_key');
+            if (storedApiKey) {
+                currentApiKey = storedApiKey;
+                document.getElementById('apiKeySection').style.display = 'none';
+                document.getElementById('mainInterface').style.display = 'block';
+            }
+        });
+
+        // Validate and save API key
+        async function validateAndSaveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            if (!apiKey.startsWith('AIza')) {
+                alert('Invalid API key format. Google AI API keys typically start with "AIza"');
+                return;
+            }
+
+            // Test the API key by trying to get voices
+            showLoading('Validating API key...');
+
+            try {
+                const response = await fetch('/api/voices');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // API key is valid, save it and show main interface
+                    currentApiKey = apiKey;
+                    sessionStorage.setItem('gemini_api_key', apiKey);
+                    
+                    document.getElementById('apiKeySection').style.display = 'none';
+                    document.getElementById('mainInterface').style.display = 'block';
+                    
+                    hideLoading();
+                    showResult(true, '✅ API key validated successfully!');
+                } else {
+                    hideLoading();
+                    alert('Failed to validate API key. Please check your key and try again.');
+                }
+            } catch (error) {
+                hideLoading();
+                alert('Error validating API key: ' + error.message);
+            }
+        }
+
+        // Change API key
+        function changeApiKey() {
+            currentApiKey = '';
+            sessionStorage.removeItem('gemini_api_key');
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('apiKeySection').style.display = 'block';
+            document.getElementById('mainInterface').style.display = 'none';
+        }
+
+        // Check if API key is set on server
+        async function checkApiKey() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                // We no longer rely on server-side API key
+                console.log('Server health:', data);
+            } catch (error) {
+                console.log('Server check failed:', error);
+            }
+        }
+
+        // Load available voices
+        async function loadVoices() {
+            try {
+                const response = await fetch('/api/voices');
+                const data = await response.json();
+                if (data.success) {
+                    voices.length = 0; // Clear existing
+                    voices.push(...data.voices);
+                    populateVoiceSelectors();
+                    createVoiceGrid();
+                }
+            } catch (error) {
+                console.log('Could not load voices:', error);
+            }
+        }
+
+        // Populate voice selectors
+        function populateVoiceSelectors() {
+            const selectors = ['singleVoice', 'speaker1Voice', 'speaker2Voice', 'genSpeaker1Voice', 'genSpeaker2Voice'];
+            
+            selectors.forEach(selectorId => {
+                const selector = document.getElementById(selectorId);
+                if (selector) {
+                    // Keep existing options, add the rest
+                    const existingValues = Array.from(selector.options).map(opt => opt.value);
+                    
+                    voices.forEach(voice => {
+                        if (!existingValues.includes(voice)) {
+                            const option = document.createElement('option');
+                            option.value = voice;
+                            option.textContent = voice;
+                            selector.appendChild(option);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Create voice grid for selection
+        function createVoiceGrid() {
+            const grid = document.getElementById('allVoices');
+            grid.innerHTML = '';
+            
+            voices.forEach(voice => {
+                const voiceOption = document.createElement('div');
+                voiceOption.className = 'voice-option';
+                voiceOption.textContent = voice;
+                voiceOption.onclick = () => {
+                    document.getElementById('singleVoice').value = voice;
+                    toggleVoiceGrid();
+                };
+                grid.appendChild(voiceOption);
+            });
+        }
+
+        // Toggle voice grid visibility
+        function toggleVoiceGrid() {
+            const grid = document.getElementById('allVoices');
+            const button = event.target;
+            
+            if (grid.style.display === 'none' || !grid.style.display) {
+                grid.style.display = 'grid';
+                button.textContent = 'Hide Voices';
+            } else {
+                grid.style.display = 'none';
+                button.textContent = 'Show All Voices';
+            }
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Toggle generate mode speakers
+        function toggleGenerateMode() {
+            const checkbox = document.getElementById('generateMultiSpeaker');
+            const config = document.getElementById('generateSpeakersConfig');
+            config.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        // Show loading state
+        function showLoading(message = 'Generating audio...') {
+            document.getElementById('loadingText').textContent = message;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            // Disable all buttons
+            document.querySelectorAll('.button').forEach(btn => btn.disabled = true);
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            
+            // Re-enable all buttons
+            document.querySelectorAll('.button').forEach(btn => btn.disabled = false);
+        }
+
+        // Helper function to format error messages with helpful links
+        function formatErrorMessage(errorText) {
+            if (errorText.includes('429') && errorText.includes('RESOURCE_EXHAUSTED')) {
+                return `❌ Rate limit exceeded - You've used up your API quota for this time period.<br><br>
+                        <strong>What this means:</strong><br>
+                        • You've hit the rate limit for Gemini TTS API calls<br>
+                        • Wait 1-2 minutes before trying again<br>
+                        • Consider shorter text to use fewer tokens<br><br>
+                        <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" style="color: #1976d2;">
+                        📚 Learn more about API quotas and billing →</a>`;
+            }
+            return errorText;
+        }
+
+        // Show result
+        function showResult(success, message, audioData = null) {
+            hideLoading();
+            
+            const result = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            const audioPlayer = document.getElementById('audioPlayer');
+            
+            result.className = 'result ' + (success ? 'success' : 'error');
+            result.style.display = 'block';
+            
+            // Use innerHTML for error messages to support links and formatting
+            if (success) {
+                resultMessage.textContent = message;
+            } else {
+                resultMessage.innerHTML = formatErrorMessage(message);
+            }
+            
+            if (success && audioData) {
+                const audioBlob = base64ToBlob(audioData, 'audio/wav');
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+                
+                // Auto-play the audio
+                audioPlayer.play().catch(e => console.log('Auto-play blocked:', e));
+            } else {
+                audioPlayer.style.display = 'none';
+            }
+        }
+
+        // Convert base64 to blob
+        function base64ToBlob(base64, contentType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: contentType });
+        }
+
+        // Generate single speaker audio
+        async function generateSingle() {
+            const text = document.getElementById('singleText').value.trim();
+            const voice = document.getElementById('singleVoice').value;
+            const styleInstructions = document.getElementById('singleStyleInstructions').value.trim();
+
+            if (!currentApiKey) {
+                alert('Please set your API key first');
+                changeApiKey();
+                return;
+            }
+
+            if (!text) {
+                alert('Please enter some text to convert');
+                return;
+            }
+
+            // Combine style instructions with text if provided
+            const finalText = styleInstructions ? `${styleInstructions}\n\n${text}` : text;
+
+            showLoading('Converting text to speech...');
+
+            try {
+                const response = await fetch('/api/tts/single', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        api_key: currentApiKey,
+                        text: finalText, 
+                        voice: voice 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(true, `✅ ${data.message}`, data.audio_data);
+                } else {
+                    showResult(false, `❌ ${data.error}`);
+                }
+            } catch (error) {
+                showResult(false, `❌ Network error: ${error.message}`);
+            }
+        }
+
+        // Generate multi-speaker audio
+        async function generateMulti() {
+            const text = document.getElementById('multiText').value.trim();
+            const speaker1Name = document.getElementById('speaker1Name').value.trim();
+            const speaker1Voice = document.getElementById('speaker1Voice').value;
+            const speaker2Name = document.getElementById('speaker2Name').value.trim();
+            const speaker2Voice = document.getElementById('speaker2Voice').value;
+            const styleInstructions = document.getElementById('multiStyleInstructions').value.trim();
+
+            if (!currentApiKey) {
+                alert('Please set your API key first');
+                changeApiKey();
+                return;
+            }
+
+            if (!text) {
+                alert('Please enter conversation text');
+                return;
+            }
+
+            if (!speaker1Name || !speaker2Name) {
+                alert('Please enter names for both speakers');
+                return;
+            }
+
+            const speakers = {};
+            speakers[speaker1Name] = speaker1Voice;
+            speakers[speaker2Name] = speaker2Voice;
+
+            // Combine style instructions with text if provided
+            const finalText = styleInstructions ? `${styleInstructions}\n\n${text}` : text;
+
+            showLoading('Creating multi-speaker conversation...');
+
+            try {
+                const response = await fetch('/api/tts/multi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        api_key: currentApiKey,
+                        text: finalText, 
+                        speakers: speakers 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(true, `✅ ${data.message}`, data.audio_data);
+                } else {
+                    showResult(false, `❌ ${data.error}`);
+                }
+            } catch (error) {
+                showResult(false, `❌ Network error: ${error.message}`);
+            }
+        }
+
+        // Generate content and show transcript
+        async function generateContent() {
+            const topic = document.getElementById('topicText').value.trim();
+            const useMultiSpeaker = document.getElementById('generateMultiSpeaker').checked;
+
+            if (!currentApiKey) {
+                alert('Please set your API key first');
+                changeApiKey();
+                return;
+            }
+
+            if (!topic) {
+                alert('Please enter a topic');
+                return;
+            }
+
+            let speakers = null;
+            if (useMultiSpeaker) {
+                const speaker1Name = document.getElementById('genSpeaker1Name').value.trim();
+                const speaker1Voice = document.getElementById('genSpeaker1Voice').value;
+                const speaker2Name = document.getElementById('genSpeaker2Name').value.trim();
+                const speaker2Voice = document.getElementById('genSpeaker2Voice').value;
+
+                if (!speaker1Name || !speaker2Name) {
+                    alert('Please enter names for both speakers');
+                    return;
+                }
+
+                speakers = {};
+                speakers[speaker1Name] = speaker1Voice;
+                speakers[speaker2Name] = speaker2Voice;
+            }
+
+            showLoading('Generating content...');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        api_key: currentApiKey,
+                        topic: topic,
+                        speakers: speakers,
+                        generate_only: true  // Only generate content, don't convert to speech yet
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    hideLoading();
+                    // Store the generated content and speakers globally
+                    window.generatedContent = data.generated_text;
+                    window.generatedSpeakers = speakers;
+                    
+                    // Show the generated content
+                    document.getElementById('generatedContentText').textContent = data.generated_text;
+                    document.getElementById('generatedContentSection').style.display = 'block';
+                    
+                    // Hide any previous results
+                    document.getElementById('result').style.display = 'none';
+                } else {
+                    showResult(false, formatErrorMessage(`❌ ${data.error}`));
+                }
+            } catch (error) {
+                showResult(false, formatErrorMessage(`❌ Network error: ${error.message}`));
+            }
+        }
+
+        // Convert the generated content to speech
+        async function convertGeneratedToSpeech() {
+            const useMultiSpeaker = document.getElementById('generateMultiSpeaker').checked;
+            const content = window.generatedContent;
+            const speakers = window.generatedSpeakers;
+
+            if (!content) {
+                alert('No content to convert');
+                return;
+            }
+
+            showLoading('Converting content to speech...');
+
+            try {
+                const endpoint = useMultiSpeaker ? '/api/tts/multi' : '/api/tts/single';
+                const payload = useMultiSpeaker ? 
+                    { api_key: currentApiKey, text: content, speakers: speakers } :
+                    { api_key: currentApiKey, text: content, voice: 'Charon' };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(true, `✅ ${data.message}`, data.audio_data);
+                } else {
+                    showResult(false, formatErrorMessage(`❌ ${data.error}`));
+                }
+            } catch (error) {
+                showResult(false, formatErrorMessage(`❌ Network error: ${error.message}`));
+            }
+        }
+
+        // Edit generated content
+        function editGeneratedContent() {
+            document.getElementById('editContentText').value = window.generatedContent;
+            document.getElementById('editContentSection').style.display = 'block';
+        }
+
+        // Save edited content
+        function saveEditedContent() {
+            const editedContent = document.getElementById('editContentText').value.trim();
+            if (editedContent) {
+                window.generatedContent = editedContent;
+                document.getElementById('generatedContentText').textContent = editedContent;
+                document.getElementById('editContentSection').style.display = 'none';
+            }
+        }
+
+        // Cancel editing
+        function cancelEdit() {
+            document.getElementById('editContentSection').style.display = 'none';
+        }
+    </script>
+
+    <!-- Footer -->
+    <div style="background-color: #f8f9fa; border-top: 1px solid #ddd; padding: 20px; margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 4px; color: #856404; margin-bottom: 15px;">
+            ⚠️ <strong>Security Notice:</strong> This application is designed for local use only. 
+            Do not deploy on publicly accessible domains as API keys are handled client-side.
+        </div>
+        <div>
+            <strong>Created by Joseph Nordqvist</strong> - 
+            <a href="https://github.com/bighippoman/" target="_blank" style="color: #333; text-decoration: none; margin: 0 8px;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px;">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/joseph-nordqvist/" target="_blank" style="color: #0077B5; text-decoration: none; margin: 0 8px;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px;">
+                    <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                </svg>
+                LinkedIn
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
